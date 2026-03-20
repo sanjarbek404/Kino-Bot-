@@ -41,7 +41,15 @@ export const sendMovie = async (ctx, movie, dbUser) => {
         if (movie.isRestricted) {
             caption += `\n\n⚠️ <i>Ushbu kino admin tomonidan qat'iy himoyalangan. Uni aslo yuklab, yoxud uzatib bo'lmaydi.</i>`;
         } else if (!isVip) {
-            caption += `\n\n🔒 <i>Kino Oqilona Himoyalangan! Oddiy foydalanuvchilar kinoni boshqa guruh yoki do'stlariga uzata (Forward) olmaydi. Cheklovlarni butunlay yechish uchun VIP xarid qiling.</i>`;
+            caption += `\n\n🔒 <i>🔐 Hurmatli foydalanuvchi!
+Ushbu kino maxsus himoya ostida joylangan. Yuklab olish va boshqalarga yuborish (forward) funksiyasi cheklangan.
+
+✨ Ushbu imkoniyatlar faqat VIP foydalanuvchilar uchun ochiq:
+• 📥 Yuklab olish
+• 🔄 Forward (ulashish)
+• 🚀 Cheklovlarsiz foydalanish
+
+💎 VIP obuna orqali barcha premium funksiyalarni faollashtiring!</i>`;
         }
 
         // Increment User Watched Count (if DBUser exists)
