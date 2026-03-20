@@ -318,7 +318,12 @@ export const setupUserCommands = (bot) => {
             
             await ctx.answerCbQuery('Invois qog\'ozi yaratilmoqda...').catch(()=>{});
             
-            await ctx.replyWithInvoice({
+            // Delete old invoice if user clicked another tariff to keep chat clean!
+            if (ctx.session?.lastInvoiceMsgId) {
+                await ctx.telegram.deleteMessage(ctx.chat.id, ctx.session.lastInvoiceMsgId).catch(() => {});
+            }
+            
+            const invoiceMsg = await ctx.replyWithInvoice({
                 title: `VIP Obuna (${days} kunlik)`,
                 description: `FilmXBot da eng zo'r qulayliklarga ega bo'ling va cheklovsiz ishlating! \n\n🔒 To'lovlar 100% xavfsiz va bevosita Telegram jamoasi orqali amalga oshiriladi.`,
                 payload: `vip_stars_${days}_${ctx.from.id}`,
@@ -326,6 +331,11 @@ export const setupUserCommands = (bot) => {
                 currency: 'XTR',
                 prices: [{ label: `${days} Kunlik VIP status`, amount: priceXtr }]
             });
+            
+            // Save new invoice ID for auto-cleanup
+            if (!ctx.session) ctx.session = {};
+            ctx.session.lastInvoiceMsgId = invoiceMsg.message_id;
+
         } catch (e) {
             logger.error('stars_buy err:', e);
         }
