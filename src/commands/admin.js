@@ -42,7 +42,8 @@ export const setupAdminCommands = (bot) => {
                 [Markup.button.callback('📝 Kinolar ro\'yxati', 'admin_movies_list'), Markup.button.callback('👥 Foydalanuvchilar', 'admin_users_list')],
                 [Markup.button.callback('🗑 VIP O\'chirish', 'admin_vip_remove_ui'), Markup.button.callback('📢 Majburiy Obuna', 'admin_subscription')],
                 [Markup.button.callback('🎫 Promokod yaratish', 'admin_promo'), Markup.button.callback('📢 Avto-Post Sozlamalari', 'admin_autopost')],
-                [Markup.button.callback('👮‍♂️ Adminlar', 'admin_admins'), Markup.button.callback('👤 Profil user', 'admin_user_profile')]
+                [Markup.button.callback('👤 Profil user', 'admin_user_profile'), Markup.button.callback('📩 Shaxsiy Xat', 'admin_direct_message')],
+                [Markup.button.callback('👮‍♂️ Adminlar', 'admin_admins')]
             ];
 
             if (ctx.from.id.toString() === process.env.ADMIN_ID) {
@@ -132,6 +133,16 @@ export const setupAdminCommands = (bot) => {
         } catch (e) {
             logger.error('Admin user profile action error:', e);
             ctx.answerCbQuery('❌').catch(() => {});
+        }
+    });
+
+    bot.action('admin_direct_message', async (ctx) => {
+        try {
+            if (!await adminCheck(ctx)) return ctx.answerCbQuery('❌');
+            await ctx.answerCbQuery();
+            return ctx.scene.enter('DIRECT_MESSAGE_SCENE');
+        } catch (e) {
+            logger.error('Admin direct message action error:', e);
         }
     });
 
