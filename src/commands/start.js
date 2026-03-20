@@ -1,4 +1,4 @@
-import { Markup } from 'telegraf';
+﻿import { Markup } from 'telegraf';
 import Movie from '../models/Movie.js';
 import User from '../models/User.js';
 import { getUserByTelegramId } from '../services/userService.js';
@@ -166,7 +166,7 @@ export const setupStartCommand = (bot) => {
                 `2️⃣ Yoki aniq maxfiy kino kodini yuboring (masalan: <i>125</i>)\n\n` +
                 `🚀 <i>Tavsiya: Turli guruhlarda do'stlaringiz bilan kino ishlashish uchun chatga <code>@${ctx.botInfo.username} qasoskorlar</code> deb yozsangiz kifoya!</i>`;
             // GIF Welcome Onboarding
-            await ctx.replyWithAnimation('https://media.giphy.com/media/ZeB4HcMpsyDo4/giphy.gif', { 
+            await ctx.replyWithAnimation('https://media.giphy.com/media/7VHV66bRjGRSo/giphy.gif', { 
                 caption: onboardingText, 
                 parse_mode: 'HTML' 
             }).catch(async () => {
@@ -292,3 +292,4 @@ export const setupStartCommand = (bot) => {
         }
     });
 };
+

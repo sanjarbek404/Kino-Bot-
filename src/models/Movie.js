@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const movieSchema = new mongoose.Schema({
     code: {
@@ -22,7 +22,7 @@ const movieSchema = new mongoose.Schema({
     },
     isRestricted: {
         type: Boolean,
-        default: false, // If true, VIP cannot download/forward either
+        default: false,
     },
     createdAt: {
         type: Date,
@@ -36,23 +36,21 @@ const movieSchema = new mongoose.Schema({
         comment: String,
         date: { type: Date, default: Date.now }
     }],
-    ratingSum: { type: Number, default: 0 }, // Sum of all ratings
-    ratingCount: { type: Number, default: 0 }, // Number of ratings
+    ratingSum: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
 });
 
-const Movie = mongoose.model('Movie', movieSchema);
-
-// Create text index for fast search and Sorting Indexes
+// Indekslar ALBATTA model() dan OLDIN!
 movieSchema.index({ title: 'text' });
-movieSchema.index({ code: 1 });
 movieSchema.index({ views: -1 });
 movieSchema.index({ year: -1 });
-
 
 // Virtual for average rating
 movieSchema.virtual('averageRating').get(function () {
     if (this.ratingCount === 0) return 0;
     return (this.ratingSum / this.ratingCount).toFixed(1);
 });
+
+const Movie = mongoose.model('Movie', movieSchema);
 
 export default Movie;
