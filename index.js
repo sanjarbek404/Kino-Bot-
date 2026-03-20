@@ -16,8 +16,19 @@ const startBot = async () => {
             .then(() => console.log('✅ Database connected'))
             .catch(err => console.error('❌ Database connection failed:', err.message));
 
+        // Add Commands definition
+        try {
+            await bot.telegram.setMyCommands([
+                { command: 'start', description: 'Bosh Menyu (Restart)' },
+                { command: 'help', description: 'Yordam' }
+            ]);
+            console.log('✅ Commands menu updated successfully');
+        } catch (e) {
+            console.log('❌ Commands update error:', e.message);
+        }
+
         app.get('/', (req, res) => {
-            res.send('🎥 Kino Bot is running...');
+            res.send('🎥 FilmXBot is running...');
         });
 
         app.get('/health', (req, res) => {
