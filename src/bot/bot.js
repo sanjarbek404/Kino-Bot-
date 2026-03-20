@@ -60,17 +60,7 @@ setupChannelGuard(bot);
 // Initialize VIP Expiration Scheduler
 initVipScheduler(bot);
 
-// Check Subscription Callback
-bot.action('check_subscription', async (ctx) => {
-    try {
-        await ctx.answerCbQuery('✅ Tekshirilmoqda...');
-        await ctx.deleteMessage().catch(() => { });
-        // Just send a simple message to trigger middleware re-check
-        await ctx.reply('🔄 Obuna tekshirilmoqda...');
-    } catch (e) {
-        logger.error('Check sub error:', e);
-    }
-});
+    // Check Subscription moved exclusively to start.js to run with proper Delete Message!
 
 // Error handling
 bot.catch((err, ctx) => {

@@ -80,7 +80,10 @@ export const setupInlineSearch = (bot) => {
                 input_message_content: {
                     message_text: `🎬 <b>${movie.title}</b> (${movie.year || 'N/A'})\n\n🎭 Janr: ${movie.genre || 'Noma\'lum'}\n📝 ${movie.description || ''}\n\n📥 Kino kodi: <code>${movie.code}</code>`,
                     parse_mode: 'HTML'
-                }
+                },
+                reply_markup: Markup.inlineKeyboard([
+                    [Markup.button.url('🎬 Kinoni botda ko\'rish', `https://t.me/${ctx.botInfo.username}?start=${movie.code}`)]
+                ]).reply_markup
             }));
 
             await ctx.answerInlineQuery(results, { cache_time: 10 });

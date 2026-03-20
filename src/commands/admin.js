@@ -43,7 +43,8 @@ export const setupAdminCommands = (bot) => {
                 [Markup.button.callback('🗑 VIP O\'chirish', 'admin_vip_remove_ui'), Markup.button.callback('📢 Majburiy Obuna', 'admin_subscription')],
                 [Markup.button.callback('🎫 Promokod yaratish', 'admin_promo'), Markup.button.callback('📢 Avto-Post Sozlamalari', 'admin_autopost')],
                 [Markup.button.callback('👤 Profil user', 'admin_user_profile'), Markup.button.callback('📩 Shaxsiy Xat', 'admin_direct_message')],
-                [Markup.button.callback('👮‍♂️ Adminlar', 'admin_admins')]
+                [Markup.button.callback('👮‍♂️ Adminlar', 'admin_admins')],
+                [Markup.button.callback('💾 Bazani Zaxiralash', 'admin_backup'), Markup.button.callback('📈 Katta Statistika', 'admin_stats_advanced')]
             ];
 
             if (ctx.from.id.toString() === process.env.ADMIN_ID) {
@@ -1340,6 +1341,58 @@ export const setupAdminCommands = (bot) => {
             ctx.reply(`✅ Xabar ${count} ta adminga yuborildi.`);
         } catch (e) {
             ctx.reply('❌ Xatolik');
+        }
+    });
+    // 💾 Zaxira yaratish (JSON Export)
+    bot.action('admin_backup', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('💾 Zaxira (Backup) yuklanmoqda... Boshqalardan sir saqlang!').catch(()=>{});
+            const users = await User.find({});
+            const movies = await Movie.find({});
+            
+            const backupData = {
+                generatedAt: new Date().toISOString(),
+                stats: { totalUsers: users.length, totalMovies: movies.length },
+                users,
+                movies
+            };
+            
+            const buffer = Buffer.from(JSON.stringify(backupData, null, 2));
+            await ctx.replyWithDocument(
+                { source: buffer, filename: `FilmXBot_Backup_${new Date().toISOString().split('T')[0]}.json` },
+                { caption: '✅ <b>Avtomatik Xavfsizlik Zaxirasi</b>\n\nBarcha foydalanuvchi ma\'lumotlari, ochkolar va filmlar to\'liq xavfsiz holatda qopchiqlandi. Buni hech kimga bermang!', parse_mode: 'HTML' }
+            );
+        } catch (e) {
+            logger.error('Backup error:', e);
+            ctx.reply('❌ Zaxiralash muammosi.').catch(()=>{});
+        }
+    });
+
+    // 📈 Katta Biznes Statistika
+    bot.action('admin_stats_advanced', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('📈 Tahlil tayyorlanmoqda...').catch(()=>{});
+            
+            const totalUsers = await User.countDocuments({});
+            const totalMovies = await Movie.countDocuments({});
+            const totalViewsAggr = await Movie.aggregate([ { $group: { _id: null, total: { $sum: '$views' } } } ]);
+            const totalViews = totalViewsAggr.length > 0 ? totalViewsAggr[0].total : 0;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const activeVips = await User.countDocuments({ vipUntil: { $gt: new Date() } });
+
+            let msg = `📈 <b>Katta Biznes-Statistika Tahlili</b>\n\n`;
+            msg += `👥 <b>Bazada jami Odmlar:</b> ${totalUsers} ta\n`;
+            msg += `👑 <b>Aktiv VIP Xaridorlar:</b> ${activeVips} ta\n\n`;
+            msg += `🎬 <b>Bazada jami kinolar:</b> ${totalMovies} ta\n`;
+            msg += `👁 <b>Kinolar jami ko'rilgan:</b> ${totalViews} marta\n\n`;
+            msg += `<i>💡 Sizning loyihangiz mukammal rejimda ishlamoqda. Avto-to'lovlar asosan VIP obunalar orqali yig'iladi.</i>`;
+
+            await ctx.reply(msg, { parse_mode: 'HTML' });
+        } catch (e) {
+            logger.error('Advanced stats error:', e);
+            ctx.reply('❌ Statistika muammosi.').catch(()=>{});
         }
     });
 

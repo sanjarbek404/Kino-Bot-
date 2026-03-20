@@ -159,7 +159,14 @@ export const setupStartCommand = (bot) => {
                 }
             }
 
-            // 5. Default Start
+            // 5. Default Start (Yangi foydalanuvchiga chiroyli Onboarding Yo'riqnoma)
+            const onboardingText = `🎬 <b>FilmXBot Yordamchisiga Xush kelibsiz!</b>\n\n` +
+                `🔍 <b>Qanday qilib darhol kino topamiz?</b>\n` +
+                `1️⃣ Shunchaki kino nomini yozing (masalan: <i>Venom</i>)\n` +
+                `2️⃣ Yoki aniq maxfiy kino kodini yuboring (masalan: <i>125</i>)\n\n` +
+                `🚀 <i>Tavsiya: Turli guruhlarda do'stlaringiz bilan kino ishlashish uchun chatga <code>@${ctx.botInfo.username} qasoskorlar</code> deb yozsangiz kifoya!</i>`;
+            
+            await ctx.reply(onboardingText, { parse_mode: 'HTML' }).catch(()=>{});
             sendMainMenu(ctx);
         } catch (error) {
             logger.error('Start command error:', error);
