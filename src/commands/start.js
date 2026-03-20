@@ -74,6 +74,33 @@ export const setupStartCommand = (bot) => {
                         language: 'uz', // Default modern setup
                         invitedBy: (referrerId && referrerId !== ctx.from.id.toString()) ? referrerId : null
                     });
+                    
+                    // NEW: DYNAMIC ACTION (Aksiya va Global VIP) Welcome Pack
+                    try {
+                        const Config = (await import('../models/Config.js')).default;
+                        const actionConfig = await Config.findOne({ key: 'LATEST_GLOBAL_VIP' });
+                        if (actionConfig && actionConfig.value) {
+                            const actionData = JSON.parse(actionConfig.value);
+                            if (actionData.targetDate > Date.now()) {
+                                // Aksiya xali davom etyapti! Bot yoqilganda unga qo'shilamiz
+                                user.vipUntil = new Date(actionData.targetDate);
+                                await user.save();
+                                
+                                const msgData = actionData.message;
+                                if (msgData) {
+                                    if (msgData.type === 'text') {
+                                        await ctx.telegram.sendMessage(ctx.from.id, `💎 <b>Aksiya davom etmoqda:</b>\n\n${msgData.content}\n\n<i>Botimizga a'zo bo'lganingiz uchun aksiyada qatnashish huquqini qo'lga kiritdingiz! Sizga shu lahzaning o'zida ommaviy VIP obunasi yuborildi.</i>`, { parse_mode: 'HTML' }).catch(()=>{});
+                                    } else if (msgData.type === 'photo') {
+                                        await ctx.telegram.sendPhoto(ctx.from.id, msgData.fileId, { caption: msgData.caption ? `💎 <b>Aksiya tabrigi:</b>\n\n${msgData.caption}\n\n<i>Botimizga a'zo bo'lganingiz uchun sizga ommaviy VIP sovg'a tariqasida taqdim etildi.</i>` : '💎 Yangi mijozlar uchun VIP sovg\'a aktivlashtirildi!', parse_mode: 'HTML' }).catch(()=>{});
+                                    } else if (msgData.type === 'video') {
+                                        await ctx.telegram.sendVideo(ctx.from.id, msgData.fileId, { caption: msgData.caption ? `💎 <b>Aksiya tabrigi:</b>\n\n${msgData.caption}\n\n<i>Botimizga kirganingiz munosabati bilan ushbu imtiyoz sizga ham taqdim etildi.</i>` : '💎 Yangi mijozlar uchun ommaviy VIP taqdim etildi!', parse_mode: 'HTML' }).catch(()=>{});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                         logger.error('Welcome VIP auto-gift error', e);
+                    }
 
                     // Update Referrer
                     if (user.invitedBy) {

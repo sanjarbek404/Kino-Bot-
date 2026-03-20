@@ -286,11 +286,11 @@ export const setupUserCommands = (bot) => {
                 return ctx.answerCbQuery('⏳ Siz bugungi bonusni olib bo\'lgansiz! O\'yin ertaga davom etadi.', { show_alert: true });
             }
             
-            user.points = (user.points || 0) + 15;
+            user.points = (user.points || 0) + 10;
             user.lastDailyBonus = new Date();
             await user.save();
             
-            await ctx.answerCbQuery('🎁 Tabriklaymiz! +15 ball berildi.', { show_alert: true });
+            await ctx.answerCbQuery('🎁 Tabriklaymiz! O\'yindan +10 ball yutdingiz.', { show_alert: true });
         } catch (e) {}
     });
 
@@ -299,13 +299,13 @@ export const setupUserCommands = (bot) => {
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return;
             let msg = `🛍 <b>KinoBot VIP Do'koniga Xush Kelibsiz!</b>\n\n💰 Balansingiz: <b>${user.points || 0} ball</b>\n\n🛒 <i>Ballarni qanday ishlatsangiz bo'ladi?</i>\n`;
-            msg += `▫️ <b>VIP Status (1 kunlik)</b> — 50 ball\n`;
-            msg += `▫️ <b>VIP Status (1 haftalik)</b> — 300 ball\n`;
+            msg += `▫️ <b>VIP Status (1 kunlik)</b> — 1000 ball\n`;
+            msg += `▫️ <b>VIP Status (1 haftalik)</b> — 3000 ball\n`;
             msg += `<i>Ball yig'ish uchun har kuni '🎁 Bonus' oling yoki do'stlarni taklif qiling.</i>\n\nQuyidan VIP turlarini xarid qiling:`;
             
             const buttons = [
-                [Markup.button.callback('💎 1 kunlik VIP (50 ball)', 'buy_vip_1')],
-                [Markup.button.callback('💎 7 kunlik VIP (300 ball)', 'buy_vip_7')],
+                [Markup.button.callback('💎 1 kunlik VIP (1000 ball)', 'buy_vip_1')],
+                [Markup.button.callback('💎 7 kunlik VIP (3000 ball)', 'buy_vip_7')],
                 [Markup.button.callback('🎫 Promokod ishlatish', 'cb_promo')]
             ];
             await ctx.reply(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
@@ -316,7 +316,7 @@ export const setupUserCommands = (bot) => {
     bot.action(/buy_vip_(\d+)/, async (ctx) => {
         try {
             const days = parseInt(ctx.match[1]);
-            const price = days === 1 ? 50 : 300;
+            const price = days === 1 ? 1000 : 3000;
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return;
 

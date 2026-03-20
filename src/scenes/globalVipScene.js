@@ -121,6 +121,13 @@ const globalVipScene = new Scenes.WizardScene(
                          { $set: { vipUntil: targetDate } }
                     );
 
+                    // Aksiya xotirasini Tizimli Konfiguratsiyaga Start buyrug'i uchun yozamiz
+                    await import('../models/Config.js').then(m => m.default.updateOne(
+                        { key: 'LATEST_GLOBAL_VIP' },
+                        { $set: { value: JSON.stringify({ targetDate: targetDate.getTime(), message: msgData }) } },
+                        { upsert: true }
+                    )).catch(() => {});
+
                     // Asta sekinlik bilan xabar jo'natib chiqamiz Rate Limitdan saqlanish (40ms) uchun
                     for (let i = 0; i < users.length; i++) {
                         const userId = users[i].telegramId;
