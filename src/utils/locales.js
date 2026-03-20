@@ -1,7 +1,7 @@
 export const locales = {
     uz: {
         language_select: "🇺🇿 Iltimos, tilni tanlang:\n🇷🇺 Пожалуйста, выберите язык:\n🇬🇧 Please select a language:",
-        welcome: "👋 <b>Salom, {name}!</b>\n\n🎥 <b>Kino Bot</b>ga xush kelibsiz! Bizda eng so'nggi va sifatli kinolarni topishingiz mumkin.",
+        welcome: "👋 <b>Salom, {name}!</b>\n\n🎥 <b>FilmXBot</b> ga xush kelibsiz! Bizda eng so'nggi va sifatli kinolarni topishingiz mumkin.",
         menu_main: "🏠 Bosh menyu",
         menu_cabinet: "👤 Shaxsiy Kabinet",
         menu_search: "🔍 Kino qidirish",
@@ -88,7 +88,7 @@ export const locales = {
     },
     ru: {
         language_select: "🇺🇿 Iltimos, tilni tanlang:\n🇷🇺 Пожалуйста, выберите язык:\n🇬🇧 Please select a language:",
-        welcome: "👋 <b>Привет, {name}!</b>\n\n🎥 Добро пожаловать в <b>Kino Bot</b>! Здесь вы найдете самые свежие и качественные фильмы.",
+        welcome: "👋 <b>Привет, {name}!</b>\n\n🎥 Добро пожаловать в <b>FilmXBot</b>! Здесь вы найдете самые свежие и качественные фильмы.",
         menu_main: "🏠 Главное меню",
         menu_cabinet: "👤 Личный кабинет",
         menu_search: "🔍 Поиск фильмов",
@@ -150,7 +150,7 @@ export const locales = {
     },
     en: {
         language_select: "🇺🇿 Iltimos, tilni tanlang:\n🇷🇺 Пожалуйста, выберите язык:\n🇬🇧 Please select a language:",
-        welcome: "👋 <b>Hello, {name}!</b>\n\n🎥 Welcome to <b>Kino Bot</b>! You can find the latest and highest quality movies here.",
+        welcome: "👋 <b>Hello, {name}!</b>\n\n🎥 Welcome to <b>FilmXBot</b>! You can find the latest and highest quality movies here.",
         menu_main: "🏠 Main Menu",
         menu_cabinet: "👤 My Cabinet",
         menu_search: "🔍 Search Movies",

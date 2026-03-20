@@ -83,6 +83,10 @@ const userSchema = new mongoose.Schema({
     invitedBy: {
         type: String, // Telegram ID of referrer
         default: null
+    },
+    lastBroadcastMsgId: {
+        type: Number,
+        default: null
     }
 });
 

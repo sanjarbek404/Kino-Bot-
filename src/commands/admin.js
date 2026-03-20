@@ -36,7 +36,7 @@ export const setupAdminCommands = (bot) => {
             const buttons = [
                 [Markup.button.callback('➕ Kino qo\'shish', 'admin_add_movie'), Markup.button.callback('📊 Statistika', 'admin_stats')],
                 [Markup.button.callback('📢 Reklama yuborish', 'admin_broadcast'), Markup.button.callback('💎 VIP Boshqaruv', 'admin_vip')],
-                [Markup.button.callback('🌐 Barchaga VIP berish', 'admin_global_vip')],
+                [Markup.button.callback('🌐 Barchaga VIP berish', 'admin_global_vip'), Markup.button.callback('🗑 Tarqatmani O\'chirish', 'delete_last_broadcast')],
                 [Markup.button.callback('🗑️ Kino o\'chirish', 'admin_delete_movie'), Markup.button.callback('✏️ Kino Tahrirlash', 'admin_edit_movie')],
                 [Markup.button.callback('🚫 Ban / Unban', 'admin_ban_unban'), Markup.button.callback('⭐ Top kinolar', 'admin_top_movies')],
                 [Markup.button.callback('📝 Kinolar ro\'yxati', 'admin_movies_list'), Markup.button.callback('👥 Foydalanuvchilar', 'admin_users_list')],
@@ -526,7 +526,7 @@ export const setupAdminCommands = (bot) => {
     // Return to main menu
     bot.hears('🏠 Bosh menyu', (ctx) => {
         try {
-            ctx.reply(`🎥 <b>Kino Bot</b>\n\nMarhamat, kerakli bo'limni tanlang:`, {
+            ctx.reply(`🎥 <b>FilmXBot Boshqaruvi</b>\n\nMarhamat, kerakli bo'limni tanlang:`, {
                 parse_mode: 'HTML',
                 ...Markup.keyboard([
                     ['🔍 Kino qidirish', '📂 Kategoriyalar'],
@@ -628,6 +628,7 @@ export const setupAdminCommands = (bot) => {
         }
     });
 
+    // /unban (Interactive) ...
     bot.command('unban', async (ctx) => {
         if (!await adminCheck(ctx)) return;
         try {
@@ -654,6 +655,41 @@ export const setupAdminCommands = (bot) => {
         } catch (e) {
             logger.error('Unban error:', e);
             ctx.reply('❌ Xatolik yuz berdi.').catch(() => { });
+        }
+    });
+
+    bot.action('delete_last_broadcast', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('O\'chirish boshlandi...').catch(() => {});
+            const users = await User.find({ lastBroadcastMsgId: { $ne: null } });
+            if (!users || users.length === 0) {
+                return ctx.reply('📭 Hozircha tizimda o\'chirish mumkin bo\'lgan oxirgi xabar yozuvi topilmadi.');
+            }
+            
+            await ctx.reply(`🗑 <b>Massaviy o'chirish boshlandi!</b>\n\nJami <b>${users.length} ta</b> foydalanuvchining chatidan botning oxirgi xabari (reklamasi) olib tashlanmoqda...`, { parse_mode: 'HTML' });
+            
+            let success = 0;
+            let failed = 0;
+            (async () => {
+                for (let i = 0; i < users.length; i++) {
+                    const u = users[i];
+                    try {
+                        await ctx.telegram.deleteMessage(u.telegramId, u.lastBroadcastMsgId);
+                        success++;
+                    } catch (e) {
+                        failed++;
+                    }
+                    u.lastBroadcastMsgId = null;
+                    await u.save();
+                    
+                    await new Promise(r => setTimeout(r, 40)); // Rate limit himoyasi
+                }
+                try {
+                    await ctx.reply(`✅ <b>O'chirish amaliyoti Muvaffaqiyatli yakunlandi!</b>\n\n🗑 O'chirildi: ${success}\n❌ O'chirib bo'lmadi: ${failed} (foydalanuvchi o'z vaqtida e'lonni o'chirgan yoki qoidalar ruxsat bermaydi)`, { parse_mode: 'HTML' });
+                } catch(e) {}
+            })();
+        } catch (e) {
+            logger.error('Delete broadcast error:', e);
         }
     });
 

@@ -134,12 +134,17 @@ const broadcastScene = new Scenes.WizardScene(
                     for (let i = 0; i < users.length; i++) {
                         const userId = users[i].telegramId;
                         try {
+                            let sentMsg;
                             if (msgData.type === 'text') {
-                                await ctx.telegram.sendMessage(userId, `📢 ${msgData.content}`, { parse_mode: 'HTML' });
+                                sentMsg = await ctx.telegram.sendMessage(userId, `📢 ${msgData.content}`, { parse_mode: 'HTML' });
                             } else if (msgData.type === 'photo') {
-                                await ctx.telegram.sendPhoto(userId, msgData.fileId, { caption: msgData.caption ? `📢 ${msgData.caption}` : undefined, parse_mode: 'HTML' });
+                                sentMsg = await ctx.telegram.sendPhoto(userId, msgData.fileId, { caption: msgData.caption ? `📢 ${msgData.caption}` : undefined, parse_mode: 'HTML' });
                             } else if (msgData.type === 'video') {
-                                await ctx.telegram.sendVideo(userId, msgData.fileId, { caption: msgData.caption ? `📢 ${msgData.caption}` : undefined, parse_mode: 'HTML' });
+                                sentMsg = await ctx.telegram.sendVideo(userId, msgData.fileId, { caption: msgData.caption ? `📢 ${msgData.caption}` : undefined, parse_mode: 'HTML' });
+                            }
+                            if (sentMsg) {
+                                users[i].lastBroadcastMsgId = sentMsg.message_id;
+                                await users[i].save();
                             }
                             success++;
                         } catch (e) {

@@ -225,7 +225,8 @@ export const setupUserCommands = (bot) => {
                 [Markup.button.callback('❤️ Sevimlilar', 'cb_fav'), Markup.button.callback('📜 Tarixim', 'cb_history')],
                 [Markup.button.callback('🛍 Do\'kon', 'cb_shop'), Markup.button.callback('🎁 Bonus', 'cb_bonus')],
                 [Markup.button.callback('📊 Statistika', 'cb_stats'), Markup.button.callback('🗣 Taklif', 'cb_invite')],
-                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish (Chegirma)', isVip ? 'cb_vip' : 'vip_info')]
+                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish (Chegirma)', isVip ? 'cb_vip' : 'vip_info')],
+                [Markup.button.callback('🏆 Oylik Reyting - Top 10', 'cb_leaderboard')]
             ];
 
             await ctx.reply(msg, {
@@ -298,7 +299,7 @@ export const setupUserCommands = (bot) => {
         try {
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return;
-            let msg = `🛍 <b>KinoBot VIP Do'koniga Xush Kelibsiz!</b>\n\n💰 Balansingiz: <b>${user.points || 0} ball</b>\n\n🛒 <i>Ballarni qanday ishlatsangiz bo'ladi?</i>\n`;
+            let msg = `🛍 <b>FilmXBot VIP Do'koniga Xush Kelibsiz!</b>\n\n💰 Balansingiz: <b>${user.points || 0} ball</b>\n\n🛒 <i>Ballarni qanday ishlatsangiz bo'ladi?</i>\n`;
             msg += `▫️ <b>VIP Status (1 kunlik)</b> — 1000 ball\n`;
             msg += `▫️ <b>VIP Status (1 haftalik)</b> — 3000 ball\n`;
             msg += `<i>Ball yig'ish uchun har kuni '🎁 Bonus' oling yoki do'stlarni taklif qiling.</i>\n\nQuyidan VIP turlarini xarid qiling:`;
@@ -333,6 +334,35 @@ export const setupUserCommands = (bot) => {
             await ctx.answerCbQuery(`✅ Muvaffaqiyatli! Sizga ${days} kunlik VIP berildi.`, { show_alert: true });
             await ctx.editMessageText(`✅ <b>Tabriklaymiz!</b>\n\nSiz <b>${price} ball</b> evaziga <b>${days} kunlik VIP</b> sotib oldingiz!\n💎 VIP ${currentVip.toISOString().split('T')[0]} sanasiga qadar amal qiladi.`, { parse_mode: 'HTML' });
         } catch (e) {}
+    });
+
+    bot.action('cb_leaderboard', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('Reyting hisoblanmoqda...').catch(()=>{});
+            const topUsers = await User.find({ isBanned: false }).sort({ points: -1, moviesWatched: -1 }).limit(10);
+            
+            let msg = `🏆 <b>FilmXBot Liderlar Taxtasi (Top 10)</b>\n\n`;
+            msg += `<i>Kinomanda baland ball ishlagan eng faol Top 10 foydalanuvchi:</i>\n\n`;
+            
+            topUsers.forEach((u, i) => {
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎗';
+                const name = (u.firstName || 'Foydalanuvchi').replace(/</g, '').replace(/>/g, ''); // html himoya
+                msg += `${medal} <b>${name}</b> — 💰 ${u.points || 0} ball | 🎬 ${u.moviesWatched || 0} ta kino\n`;
+            });
+            
+            msg += `\n🛒 <i>Orqada qolib ketmang! Har kuni <b>"🎁 Kunlik Bonus"</b> yig'ib reytingda 1-o'ringa chiqing!</i>`;
+            
+            await ctx.reply(msg, {
+                parse_mode: 'HTML',
+                ...Markup.inlineKeyboard([[Markup.button.callback('🔙 Yopish', 'cb_close_msg')]])
+            });
+        } catch (e) {
+             logger.error('cb_leaderboard err:', e);
+        }
+    });
+
+    bot.action('cb_close_msg', async (ctx) => {
+         await ctx.deleteMessage().catch(()=>{});
     });
 
     bot.action('cb_stats', async (ctx) => {
