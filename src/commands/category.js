@@ -65,11 +65,10 @@ export const setupInlineSearch = (bot) => {
                 return ctx.answerInlineQuery([]);
             }
 
+            // Use Regex for fast partial search to avoid MongoDB $text index missing errors
             const movies = await Movie.find({
-                $text: { $search: query }
-            }, { score: { $meta: "textScore" } })
-            .sort({ score: { $meta: "textScore" } })
-            .limit(20);
+                title: { $regex: query, $options: 'i' }
+            }).limit(20);
 
             const results = movies.map((movie) => ({
                 type: 'article',
