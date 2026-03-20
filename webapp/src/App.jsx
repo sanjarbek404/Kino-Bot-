@@ -20,7 +20,12 @@ function App() {
     fetch('/api/movies')
       .then(res => res.json())
       .then(data => {
-        setMovies(data);
+        if (Array.isArray(data)) {
+          setMovies(data);
+        } else {
+          console.error("API xatosi, kutilgan ro'yxat o'rniga obyekt:", data);
+          setMovies([]);
+        }
         setLoading(false);
       })
       .catch((e) => {
@@ -45,11 +50,11 @@ function App() {
     }, 1500);
   };
 
-  const filteredMovies = movies.filter(m => 
+  const filteredMovies = movies.filter(m => m && (
     (m.title && m.title.toLowerCase().includes(search.toLowerCase())) || 
     (m.code && m.code.toString().includes(search)) ||
     (m.genre && m.genre.toLowerCase().includes(search.toLowerCase()))
-  );
+  ));
 
   return (
     <div className="p-4 pb-20 max-w-2xl mx-auto min-h-screen">
