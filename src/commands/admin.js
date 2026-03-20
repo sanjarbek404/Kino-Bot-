@@ -36,6 +36,7 @@ export const setupAdminCommands = (bot) => {
             const buttons = [
                 [Markup.button.callback('➕ Kino qo\'shish', 'admin_add_movie'), Markup.button.callback('📊 Statistika', 'admin_stats')],
                 [Markup.button.callback('📢 Reklama yuborish', 'admin_broadcast'), Markup.button.callback('💎 VIP Boshqaruv', 'admin_vip')],
+                [Markup.button.callback('🌐 Barchaga VIP berish', 'admin_global_vip')],
                 [Markup.button.callback('🗑️ Kino o\'chirish', 'admin_delete_movie'), Markup.button.callback('✏️ Kino Tahrirlash', 'admin_edit_movie')],
                 [Markup.button.callback('🚫 Ban / Unban', 'admin_ban_unban'), Markup.button.callback('⭐ Top kinolar', 'admin_top_movies')],
                 [Markup.button.callback('📝 Kinolar ro\'yxati', 'admin_movies_list'), Markup.button.callback('👥 Foydalanuvchilar', 'admin_users_list')],
@@ -78,6 +79,14 @@ export const setupAdminCommands = (bot) => {
             if (!await adminCheck(ctx)) return ctx.answerCbQuery('❌');
             await ctx.answerCbQuery();
             return ctx.scene.enter('VIP_SCENE');
+        } catch (e) { }
+    });
+
+    bot.action('admin_global_vip', async (ctx) => {
+        try {
+            if (!await adminCheck(ctx)) return ctx.answerCbQuery('❌');
+            await ctx.answerCbQuery();
+            return ctx.scene.enter('GLOBAL_VIP_SCENE');
         } catch (e) { }
     });
 

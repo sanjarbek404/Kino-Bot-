@@ -7,6 +7,7 @@ import User from '../models/User.js';
 import { getUserByTelegramId } from '../services/userService.js';
 import PromoCode from '../models/PromoCode.js';
 import { sendMainMenu } from '../utils/menuUtils.js';
+import { getSmartRecommendations } from '../services/recommendationService.js';
 
 // Helper function to send movie
 export const sendMovie = async (ctx, movie, dbUser) => {
@@ -220,6 +221,7 @@ export const setupUserCommands = (bot) => {
             msg += `💰 <b>Ballar:</b> ${dbUser.points || 0}\n`;
 
             const buttons = [
+                [Markup.button.callback('💡 AI Tavsiyalar', 'cb_ai_rec')],
                 [Markup.button.callback('📊 Statistika', 'cb_stats'), Markup.button.callback('❤️ Sevimlilar', 'cb_fav')],
                 [Markup.button.callback('📜 Tarixim', 'cb_history'), Markup.button.callback('🎁 Bonus', 'cb_bonus')],
                 [Markup.button.callback('🗣 Taklif', 'cb_invite'), Markup.button.callback('🛍 Do\'kon', 'cb_shop')],
@@ -238,6 +240,29 @@ export const setupUserCommands = (bot) => {
     });
 
     // --- CABINET INLINE ACTIONS ---
+    bot.action('cb_ai_rec', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('💡 AI tahlil qilmoqda...').catch(() => {});
+            const user = await User.findOne({ telegramId: ctx.from.id });
+            if (!user) return;
+            
+            const reqs = await getSmartRecommendations(user._id, 5);
+            if (!reqs || reqs.length === 0) {
+                return ctx.reply('📭 Hozircha tavsiyalar yo\'q. Ko\'proq kino ko\'ring!');
+            }
+
+            let msg = '💡 <b>AI Tavsiyalar (Sizga moslangan)</b>\n\n';
+            reqs.forEach((m, i) => {
+                msg += `${i + 1}. 🎬 ${m.title} — <code>${m.code}</code>\n`;
+            });
+            msg += '\n<i>Kodni yuboring va darhol tomosha qiling!</i>';
+            
+            await ctx.replyWithHTML(msg);
+        } catch (e) {
+            logger.error('cb_ai_rec error:', e);
+        }
+    });
+
     bot.action('cb_stats', async (ctx) => {
         try {
             await ctx.answerCbQuery().catch(() => {});

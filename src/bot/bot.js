@@ -14,6 +14,7 @@ import editMovieScene from '../scenes/editMovieScene.js';
 import autoPostSettingsScene from '../scenes/autoPostSettingsScene.js';
 import mandatorySubscriptionScene from '../scenes/mandatorySubscriptionScene.js';
 import userProfileScene from '../scenes/userProfileScene.js';
+import globalVipScene from '../scenes/globalVipScene.js';
 import { setupAdminCommands } from '../commands/admin.js';
 import { setupStartCommand } from '../commands/start.js';
 import { setupUserCommands } from '../commands/user.js';
@@ -34,7 +35,8 @@ const stage = new Scenes.Stage([
     editMovieScene, 
     autoPostSettingsScene, 
     mandatorySubscriptionScene,
-    userProfileScene
+    userProfileScene,
+    globalVipScene
 ]);
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
