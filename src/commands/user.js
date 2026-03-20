@@ -39,7 +39,9 @@ export const sendMovie = async (ctx, movie, dbUser) => {
 
         // Add Restricted Warning
         if (movie.isRestricted) {
-            caption += `\n\n⚠️ <i>Ushbu kino qat'iy himoyalangan va uni yuklab olib bo'lmaydi. Faqat shu bot ichida ko'rish mumkin.</i>`;
+            caption += `\n\n⚠️ <i>Ushbu kino admin tomonidan qat'iy himoyalangan. Uni aslo yuklab, yoxud uzatib bo'lmaydi.</i>`;
+        } else if (!isVip) {
+            caption += `\n\n🔒 <i>Kino Oqilona Himoyalangan! Oddiy foydalanuvchilar kinoni boshqa guruh yoki do'stlariga uzata (Forward) olmaydi. Cheklovlarni butunlay yechish uchun VIP xarid qiling.</i>`;
         }
 
         // Increment User Watched Count (if DBUser exists)
@@ -293,7 +295,7 @@ export const setupUserCommands = (bot) => {
         } catch (e) {}
     });
 
-    bot.action('cb_shop', async (ctx) => {
+    bot.action(['cb_shop', 'vip_info'], async (ctx) => {
         try {
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return;
@@ -748,30 +750,5 @@ export const setupUserCommands = (bot) => {
         } catch (e) { }
     });
 
-    bot.action('vip_info', async (ctx) => {
-        try {
-            const message = `💎 <b>VIP OBUNA - Premium Tajriba!</b>\n\n` +
-                `✨ <b>VIP Imtiyozlari:</b>\n` +
-                `├ 🚀 Tezkor yuklab olish\n` +
-                `├ 📥 Cheklovsiz yuklash\n` +
-                `├ 🔓 Barcha kinolarga kirish\n` +
-                `├ 💬 Sharh qoldirish\n` +
-                `├ 🎬 Kino so'rash imkoniyati\n` +
-                `└ ⭐ Maxsus VIP Badge\n\n` +
-                `💰 <b>Narxlar:</b>\n` +
-                `├ 🔹 7 kun — <b>10,000 so'm</b>\n` +
-                `├ 🔹 30 kun — <b>30,000 so'm</b> (eng ommabop!)\n` +
-                `└ 🔹 90 kun — <b>80,000 so'm</b> (tejamkor!)\n\n` +
-                `📞 <b>To'lov uchun:</b> @sanjarbek_404\n\n` +
-                `<i>💡 VIP oling va kinolardan to'liq bahramand bo'ling!</i>`;
-
-            await ctx.replyWithHTML(message, Markup.inlineKeyboard([
-                [Markup.button.url('📞 Adminga yozish', 'https://t.me/sanjarbek_404')]
-            ]));
-            ctx.answerCbQuery();
-        } catch (error) {
-            logger.error('VIP Info Handler Error:', error);
-            ctx.answerCbQuery('❌ Xatolik yuz berdi.').catch(() => { });
-        }
-    });
+    // (vip_info handler united with cb_shop)
 };
