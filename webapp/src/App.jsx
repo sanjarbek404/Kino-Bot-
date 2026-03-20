@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search } from 'lucide-react';
-import WebApp from '@twa-dev/sdk';
+
+const WebApp = window.Telegram.WebApp;
 
 function App() {
   const [movies, setMovies] = useState([]);
