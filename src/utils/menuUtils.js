@@ -13,10 +13,8 @@ export const sendMainMenu = async (ctx) => {
 
         // Define simple and professional buttons
         let menu = [
-            [ctx.t('menu_search'), ctx.t('menu_category')],
-            [ctx.t('menu_top'), ctx.t('menu_new')],
-            [ctx.t('menu_cabinet')],
-            [ctx.t('menu_settings')]
+            [ctx.t('menu_search'), ctx.t('menu_cabinet')],
+            [ctx.t('menu_top'), ctx.t('menu_category')]
         ];
 
         // Welcome message with VIP status

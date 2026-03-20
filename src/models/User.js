@@ -50,9 +50,13 @@ const userSchema = new mongoose.Schema({
         enum: ['uz', 'ru', 'en'],
         default: null
     },
-    vipNotified: {
-        type: Boolean,
-        default: false
+    dailyMovieCount: {
+        type: Number,
+        default: 0
+    },
+    lastMovieDate: {
+        type: Date,
+        default: null
     },
     watchHistory: [{
         movie: {

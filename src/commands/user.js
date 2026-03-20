@@ -221,12 +221,11 @@ export const setupUserCommands = (bot) => {
             msg += `💰 <b>Ballar:</b> ${dbUser.points || 0}\n`;
 
             const buttons = [
-                [Markup.button.callback('💡 AI Tavsiyalar', 'cb_ai_rec')],
-                [Markup.button.callback('📊 Statistika', 'cb_stats'), Markup.button.callback('❤️ Sevimlilar', 'cb_fav')],
-                [Markup.button.callback('📜 Tarixim', 'cb_history'), Markup.button.callback('🎁 Bonus', 'cb_bonus')],
-                [Markup.button.callback('🗣 Taklif', 'cb_invite'), Markup.button.callback('🛍 Do\'kon', 'cb_shop')],
-                [Markup.button.callback('🎫 Promokod', 'cb_promo'), Markup.button.callback('🎰 Tasodifiy Kino', 'cb_random')],
-                [Markup.button.callback(isVip ? '⏳ VIP Muddatim' : '💎 VIP Olish', isVip ? 'cb_vip' : 'vip_info')]
+                [Markup.button.callback('💡 AI Tavsiyalar', 'cb_ai_rec'), Markup.button.callback('🎰 Omadni sinash', 'cb_random')],
+                [Markup.button.callback('❤️ Sevimlilar', 'cb_fav'), Markup.button.callback('📜 Tarixim', 'cb_history')],
+                [Markup.button.callback('🛍 Do\'kon', 'cb_shop'), Markup.button.callback('🎁 Bonus', 'cb_bonus')],
+                [Markup.button.callback('📊 Statistika', 'cb_stats'), Markup.button.callback('🗣 Taklif', 'cb_invite')],
+                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish (Chegirma)', isVip ? 'cb_vip' : 'vip_info')]
             ];
 
             await ctx.reply(msg, {
@@ -261,6 +260,79 @@ export const setupUserCommands = (bot) => {
         } catch (e) {
             logger.error('cb_ai_rec error:', e);
         }
+    });
+
+    bot.action('cb_random', async (ctx) => {
+        try {
+            await ctx.answerCbQuery('🎰 Tasodifiy kino qidirilmoqda...').catch(() => {});
+            const count = await Movie.countDocuments();
+            if (count === 0) return ctx.reply('📭 Kinolar yo\'q.');
+            const random = Math.floor(Math.random() * count);
+            const movie = await Movie.findOne().skip(random);
+            const user = await User.findOne({ telegramId: ctx.from.id });
+            await sendMovie(ctx, movie, user);
+        } catch (e) {}
+    });
+
+    bot.action('cb_bonus', async (ctx) => {
+        try {
+            const user = await User.findOne({ telegramId: ctx.from.id });
+            if (!user) return ctx.answerCbQuery('❌ Xatolik', { show_alert: true });
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (user.lastDailyBonus && new Date(user.lastDailyBonus) >= today) {
+                return ctx.answerCbQuery('⏳ Siz bugungi bonusni olib bo\'lgansiz! O\'yin ertaga davom etadi.', { show_alert: true });
+            }
+            
+            user.points = (user.points || 0) + 15;
+            user.lastDailyBonus = new Date();
+            await user.save();
+            
+            await ctx.answerCbQuery('🎁 Tabriklaymiz! +15 ball berildi.', { show_alert: true });
+        } catch (e) {}
+    });
+
+    bot.action('cb_shop', async (ctx) => {
+        try {
+            const user = await User.findOne({ telegramId: ctx.from.id });
+            if (!user) return;
+            let msg = `🛍 <b>KinoBot VIP Do'koniga Xush Kelibsiz!</b>\n\n💰 Balansingiz: <b>${user.points || 0} ball</b>\n\n🛒 <i>Ballarni qanday ishlatsangiz bo'ladi?</i>\n`;
+            msg += `▫️ <b>VIP Status (1 kunlik)</b> — 50 ball\n`;
+            msg += `▫️ <b>VIP Status (1 haftalik)</b> — 300 ball\n`;
+            msg += `<i>Ball yig'ish uchun har kuni '🎁 Bonus' oling yoki do'stlarni taklif qiling.</i>\n\nQuyidan VIP turlarini xarid qiling:`;
+            
+            const buttons = [
+                [Markup.button.callback('💎 1 kunlik VIP (50 ball)', 'buy_vip_1')],
+                [Markup.button.callback('💎 7 kunlik VIP (300 ball)', 'buy_vip_7')],
+                [Markup.button.callback('🎫 Promokod ishlatish', 'cb_promo')]
+            ];
+            await ctx.reply(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
+            await ctx.answerCbQuery().catch(() => {});
+        } catch (e) {}
+    });
+
+    bot.action(/buy_vip_(\d+)/, async (ctx) => {
+        try {
+            const days = parseInt(ctx.match[1]);
+            const price = days === 1 ? 50 : 300;
+            const user = await User.findOne({ telegramId: ctx.from.id });
+            if (!user) return;
+
+            if ((user.points || 0) < price) {
+                return ctx.answerCbQuery(`❌ Mablag' yetarli emas! Sizga yana ${price - (user.points || 0)} ball kerak.`, { show_alert: true });
+            }
+
+            user.points -= price;
+            const currentVip = user.vipUntil && new Date(user.vipUntil) > new Date() ? new Date(user.vipUntil) : new Date();
+            currentVip.setDate(currentVip.getDate() + days);
+            user.vipUntil = currentVip;
+            await user.save();
+
+            await ctx.answerCbQuery(`✅ Muvaffaqiyatli! Sizga ${days} kunlik VIP berildi.`, { show_alert: true });
+            await ctx.editMessageText(`✅ <b>Tabriklaymiz!</b>\n\nSiz <b>${price} ball</b> evaziga <b>${days} kunlik VIP</b> sotib oldingiz!\n💎 VIP ${currentVip.toISOString().split('T')[0]} sanasiga qadar amal qiladi.`, { parse_mode: 'HTML' });
+        } catch (e) {}
     });
 
     bot.action('cb_stats', async (ctx) => {
