@@ -26,8 +26,8 @@ export const sendMovie = async (ctx, movie, dbUser) => {
 
         let caption = ctx.t('movie_found', {
             title: movie.title,
-            year: movie.year || 'N/A',
-            genre: movie.genre || 'N/A',
+            year: (movie.year || (movie.released ? new Date(movie.released).getFullYear() : 'N/A')),
+            genre: (Array.isArray(movie.genres) ? movie.genres.join(', ') : (movie.genre || 'N/A')),
             rating: movie.averageRating || '0.0',
             views: views
         });

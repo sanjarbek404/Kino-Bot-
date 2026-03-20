@@ -8,14 +8,12 @@ export const setupCategoryCommands = (bot) => {
     // Handle "📂 Kategoriyalar"
     bot.hears(['📂 Kategoriyalar', '📂 Категории', '📂 Categories'], async (ctx) => {
         try {
-            // Get genres from movies
             const genres = await Movie.distinct('genre');
 
             if (!genres || genres.length === 0) {
                 return ctx.reply('📭 Hozircha kategoriyalar yo\'q.');
             }
 
-            // Filter out empty genres
             const validGenres = genres.filter(g => g && g.trim());
 
             const buttons = validGenres.map(g => [Markup.button.callback(`🎭 ${g}`, `genre_${g}`)]);
@@ -55,29 +53,37 @@ export const setupCategoryCommands = (bot) => {
     });
 };
 
-// Inline Search Handler
+// Inline Search Handler - KINO KODI orqali qidirish
 export const setupInlineSearch = (bot) => {
     bot.on('inline_query', async (ctx) => {
         try {
             const query = ctx.inlineQuery?.query;
 
-            if (!query || query.length < 2) {
+            if (!query || query.length < 1) {
                 return ctx.answerInlineQuery([]);
             }
 
-            // Use Regex for fast partial search to avoid MongoDB $text index missing errors
-            const movies = await Movie.find({
-                title: { $regex: query, $options: 'i' }
-            }).limit(20);
+            let movies = [];
+
+            // Agar faqat raqam kiritilsa, kod bo'yicha qidirish
+            if (/^\d+$/.test(query)) {
+                const movie = await Movie.findOne({ code: parseInt(query) });
+                if (movie) movies = [movie];
+            } else {
+                // Nom bo'yicha ham qidirish (yordamchi)
+                movies = await Movie.find({
+                    title: { $regex: query, $options: 'i' }
+                }).limit(20);
+            }
 
             const results = movies.map((movie) => ({
                 type: 'article',
                 id: String(movie._id),
-                title: movie.title,
-                description: `📅 ${movie.year || 'N/A'} | 🎭 ${movie.genre || 'N/A'} | 👁 ${movie.views || 0}`,
+                title: movie.title || 'Nomi yo\'q',
+                description: `📥 Kod: ${movie.code || 'N/A'} | 👁 ${movie.views || 0} marta ko'rilgan`,
                 thumb_url: movie.poster || undefined,
                 input_message_content: {
-                    message_text: `🎬 <b>${movie.title}</b> (${movie.year || 'N/A'})\n\n🎭 Janr: ${movie.genre || 'Noma\'lum'}\n📝 ${movie.description || ''}\n\n📥 Kino kodi: <code>${movie.code}</code>`,
+                    message_text: `🎬 <b>${movie.title || 'Film'}</b>\n\n📥 Kino kodi: <code>${movie.code}</code>\n\n<i>Kinoni to'liq ko'rish uchun pastdagi tugmani bosing!</i>`,
                     parse_mode: 'HTML'
                 },
                 reply_markup: Markup.inlineKeyboard([
