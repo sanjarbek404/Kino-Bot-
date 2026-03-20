@@ -167,7 +167,6 @@ export const setupStartCommand = (bot) => {
                 `🚀 <i>Tavsiya: Turli guruhlarda do'stlaringiz bi
                 lan kino ishlashish uchun chatga <code>@${ctx.botInfo.username} qasoskorlar</code> deb yozsangiz kifoya!</i>`;
             await ctx.reply(onboardingText, { parse_mode: 'HTML' }).catch(()=>{});
-            });
             sendMainMenu(ctx);
         } catch (error) {
             logger.error('Start command error:', error);
