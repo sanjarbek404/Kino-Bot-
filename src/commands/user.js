@@ -68,9 +68,10 @@ export const sendMovie = async (ctx, movie, dbUser) => {
             [Markup.button.callback(ctx.t('menu_vip'), `review_${movie.code}`), Markup.button.callback('💬', `read_reviews_${movie.code}`)]
         ];
 
-        // Sharing is VIP-only, and blocked entirely if movie is restricted
-        if (isVip && !movie.isRestricted) {
-            buttons.push([Markup.button.callback('📤', `share_${movie.code}`)]);
+        // 📤 Do'stlarga yuborish (Referall Marketing)
+        if (!movie.isRestricted) {
+            const shareUrl = `https://t.me/share/url?url=https://t.me/${ctx.botInfo.username}?start=${movie.code}&text=🎬 Men ushbu zo'r kinoni topdim, ko'rishni tavsiya qilaman!`;
+            buttons.push([Markup.button.url('↗️ Do\'stlarga yuborish', shareUrl)]);
         }
 
         // 💎 VIP Promo Button for non-VIP users
@@ -466,6 +467,8 @@ export const setupUserCommands = (bot) => {
             }
 
             const text = ctx.message.text.trim();
+            // Chat oynasini ortiqcha so'z va kodlardan toza saqlash (App-like UI)
+            try { await ctx.deleteMessage(); } catch (e) {}
 
             // Check if number (Code)
             if (/^\d+$/.test(text)) {

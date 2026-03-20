@@ -92,4 +92,8 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+User.collection.createIndex({ telegramId: 1 }).catch(()=>{});
+User.collection.createIndex({ points: -1 }).catch(()=>{});
+User.collection.createIndex({ moviesWatched: -1 }).catch(()=>{});
+
 export default User;
