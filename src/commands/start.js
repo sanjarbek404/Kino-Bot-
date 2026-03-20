@@ -1,4 +1,4 @@
-﻿import { Markup } from 'telegraf';
+import { Markup } from 'telegraf';
 import Movie from '../models/Movie.js';
 import User from '../models/User.js';
 import { getUserByTelegramId } from '../services/userService.js';
@@ -159,14 +159,38 @@ export const setupStartCommand = (bot) => {
                 }
             }
 
-            // 5. Default Start (Yangi foydalanuvchiga chiroyli Onboarding Yo'riqnoma)
-            const onboardingText = `🎬 <b>FilmXBotga Xush kelibsiz!</b>\n\n` +
-                `🔍 <b>Qanday qilib darhol kino topamiz?</b>\n` +
-                `1️⃣ Shunchaki kino nomini yozing (masalan: <i>Venom</i>)\n` +
-                `2️⃣ Yoki aniq maxfiy kino kodini yuboring (masalan: <i>125</i>)\n\n` +
-                `🚀 <i>Tavsiya: Turli guruhlarda do'stlaringiz bi
-                lan kino ishlashish uchun chatga <code>@${ctx.botInfo.username} qasoskorlar</code> deb yozsangiz kifoya!</i>`;
-            await ctx.reply(onboardingText, { parse_mode: 'HTML' }).catch(()=>{});
+            // 5. Default Start Check for Custom GIF/Text
+            try {
+                const Config = (await import('../models/Config.js')).default;
+                const startGifConfig = await Config.findOne({ key: 'START_GIF' });
+                
+                let customSent = false;
+                if (startGifConfig && startGifConfig.value) {
+                    const data = JSON.parse(startGifConfig.value);
+                    const caption = data.caption || `🎬 <b>FilmXBotga Xush kelibsiz!</b>\n\n🔍 Qanday qilib kino topamiz?\nKino maxfiy kodini yoki nomini yuboring.`;
+                    
+                    if (data.type === 'animation') {
+                        await ctx.replyWithAnimation(data.fileId, { caption, parse_mode: 'HTML' }).then(() => customSent = true).catch(() => {});
+                    } else if (data.type === 'photo') {
+                        await ctx.replyWithPhoto(data.fileId, { caption, parse_mode: 'HTML' }).then(() => customSent = true).catch(() => {});
+                    } else if (data.type === 'video') {
+                        await ctx.replyWithVideo(data.fileId, { caption, parse_mode: 'HTML' }).then(() => customSent = true).catch(() => {});
+                    }
+                }
+
+                if (!customSent) {
+                    const onboardingText = `🎬 <b>FilmXBotga Xush kelibsiz!</b>\n\n` +
+                        `🔍 <b>Qanday qilib darhol kino topamiz?</b>\n` +
+                        `1️⃣ Shunchaki kino nomini yozing (masalan: <i>Venom</i>)\n` +
+                        `2️⃣ Yoki aniq maxfiy kino kodini yuboring (masalan: <i>125</i>)\n\n` +
+                        `🚀 <i>Tavsiya: Turli guruhlarda do'stlaringiz bilan kino ishlashish uchun chatga <code>@${ctx.botInfo.username} qasoskorlar</code> deb yozsangiz kifoya!</i>`;
+                    await ctx.reply(onboardingText, { parse_mode: 'HTML' }).catch(()=>{});
+                }
+            } catch (err) {
+                logger.error('Start GIF send error:', err);
+                const onboardingText = `🎬 <b>FilmXBotga Xush kelibsiz!</b>\n\nKino nomini yoki kodini yuboring.`;
+                await ctx.reply(onboardingText, { parse_mode: 'HTML' }).catch(()=>{});
+            }
             sendMainMenu(ctx);
         } catch (error) {
             logger.error('Start command error:', error);

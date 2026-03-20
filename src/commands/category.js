@@ -81,7 +81,6 @@ export const setupInlineSearch = (bot) => {
                 id: String(movie._id),
                 title: movie.title || 'Nomi yo\'q',
                 description: `📥 Kod: ${movie.code || 'N/A'} | 👁 ${movie.views || 0} marta ko'rilgan`,
-                thumb_url: movie.poster || undefined,
                 input_message_content: {
                     message_text: `🎬 <b>${movie.title || 'Film'}</b>\n\n📥 Kino kodi: <code>${movie.code}</code>\n\n<i>Kinoni to'liq ko'rish uchun pastdagi tugmani bosing!</i>`,
                     parse_mode: 'HTML'

@@ -207,6 +207,22 @@ export const setupUserCommands = (bot) => {
         }
     });
 
+    // Handle "🎲 Tasodifiy kino"
+    bot.hears(['🎲 Tasodifiy kino', '🎲 Случайный фильм', '🎲 Random Movie'], async (ctx) => {
+        try {
+            const count = await Movie.countDocuments();
+            if (count === 0) return ctx.reply(ctx.t('not_found'));
+            const random = Math.floor(Math.random() * count);
+            const movie = await Movie.findOne().skip(random);
+            const dbUser = await getUserByTelegramId(ctx.from.id);
+            await ctx.reply('🎲 <b>Tasodifiy tanlandi!</b>', { parse_mode: 'HTML' });
+            await sendMovie(ctx, movie, dbUser);
+        } catch (e) {
+            logger.error('Random movie error:', e);
+            ctx.reply(ctx.t('error_general')).catch(() => { });
+        }
+    });
+
     // Handle "👤 Shaxsiy Kabinet"
     bot.hears(['👤 Shaxsiy Kabinet', '👤 Личный кабинет', '👤 My Cabinet'], async (ctx) => {
         try {
@@ -487,12 +503,12 @@ export const setupUserCommands = (bot) => {
             const isButton = Object.values(ctx.session?.user?.language ? {} : {}).some(val => val === ctx.message.text);
             // Simplified button texts check for avoiding text handler conflicts
             const buttonTexts = [
-                '🔍 Kino qidirish', '🆕 Yangi kinolar', '📂 Kategoriyalar', '🔥 Top kinolar',
+                '🔍 Kino qidirish', '🆕 Yangi kinolar', '📂 Kategoriyalar', '🔥 Top kinolar', '🎲 Tasodifiy kino',
                 '👤 Shaxsiy Kabinet', '⚙️ Sozlamalar',
                 // Ru
-                '🔍 Поиск фильмов', '📂 Категории', '🆕 Новинки', '🔥 Топ фильмы', '👤 Личный кабинет', '⚙️ Настройки',
+                '🔍 Поиск фильмов', '📂 Категории', '🆕 Новинки', '🔥 Топ фильмы', '🎲 Случайный фильм', '👤 Личный кабинет', '⚙️ Настройки',
                 // En
-                '🔍 Search Movies', '📂 Categories', '🆕 New Movies', '🔥 Top Movies', '👤 My Cabinet', '⚙️ Settings',
+                '🔍 Search Movies', '📂 Categories', '🆕 New Movies', '🔥 Top Movies', '🎲 Random Movie', '👤 My Cabinet', '⚙️ Settings',
                 // Legacy / Settings
                 '🇺🇿 O\'zbekcha', '🇷🇺 Русский', '🇬🇧 English', '🏠 Bosh menyu', '🏠 Главное меню', '🏠 Main Menu'
             ];

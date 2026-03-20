@@ -41,7 +41,8 @@ export const setupAdminCommands = (bot) => {
                 [Markup.button.callback('🚫 Ban / Unban', 'admin_ban_unban'), Markup.button.callback('⭐ Top kinolar', 'admin_top_movies')],
                 [Markup.button.callback('📝 Kinolar ro\'yxati', 'admin_movies_list'), Markup.button.callback('👥 Foydalanuvchilar', 'admin_users_list')],
                 [Markup.button.callback('🗑 VIP O\'chirish', 'admin_vip_remove_ui'), Markup.button.callback('📢 Majburiy Obuna', 'admin_subscription')],
-                [Markup.button.callback('🎫 Promokod yaratish', 'admin_promo'), Markup.button.callback('📢 Avto-Post Sozlamalari', 'admin_autopost')],
+                [Markup.button.callback('🎬 Start Xabar/GIF', 'admin_start_gif'), Markup.button.callback('🎫 Promokod yaratish', 'admin_promo')],
+                [Markup.button.callback('📢 Avto-Post Sozlamalari', 'admin_autopost'), Markup.button.callback('👤 Profil user', 'admin_user_profile')],
                 [Markup.button.callback('👤 Profil user', 'admin_user_profile'), Markup.button.callback('📩 Shaxsiy Xat', 'admin_direct_message')],
                 [Markup.button.callback('👮‍♂️ Adminlar', 'admin_admins')],
                 [Markup.button.callback('💾 Bazani Zaxiralash', 'admin_backup'), Markup.button.callback('📈 Katta Statistika', 'admin_stats_advanced')]
@@ -81,6 +82,14 @@ export const setupAdminCommands = (bot) => {
             if (!await adminCheck(ctx)) return ctx.answerCbQuery('❌');
             await ctx.answerCbQuery();
             return ctx.scene.enter('VIP_SCENE');
+        } catch (e) { }
+    });
+
+    bot.action('admin_start_gif', async (ctx) => {
+        try {
+            if (!await adminCheck(ctx)) return ctx.answerCbQuery('❌');
+            await ctx.answerCbQuery();
+            return ctx.scene.enter('START_GIF_SCENE');
         } catch (e) { }
     });
 
