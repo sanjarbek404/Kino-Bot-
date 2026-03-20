@@ -12,7 +12,11 @@ export const sendMainMenu = async (ctx) => {
         if (user) ctx.session.user = user;
 
         // Define simple and professional buttons
+        const defaultWebAppUrl = 'https://filmxbot-demo.onrender.com/webapp'; // Default public facing url for local tests
+        const webAppUrl = process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webapp` : defaultWebAppUrl;
+        
         let menu = [
+            [Markup.button.webApp('🌐 Katalog (Mini App)', webAppUrl)],
             [ctx.t('menu_search'), ctx.t('menu_cabinet')],
             [ctx.t('menu_top'), ctx.t('menu_category')],
             [ctx.t('menu_random')]

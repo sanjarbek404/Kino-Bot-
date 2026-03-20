@@ -490,6 +490,22 @@ export const setupUserCommands = (bot) => {
         } catch (e) { }
     });
 
+    // Handle Web App Data response
+    bot.on('web_app_data', async (ctx) => {
+        try {
+            const data = JSON.parse(ctx.message.web_app_data.data);
+            if (data.action === 'play_movie' && data.code) {
+                const movie = await getMovieByCode(parseInt(data.code));
+                if (movie) {
+                    const dbUser = await getUserByTelegramId(ctx.from.id);
+                    await sendMovie(ctx, movie, dbUser);
+                }
+            }
+        } catch (e) {
+            logger.error('Web app data error:', e);
+        }
+    });
+
     // Handle Text (Search or Code)
     bot.on('text', async (ctx, next) => {
         try {
@@ -534,22 +550,31 @@ export const setupUserCommands = (bot) => {
                 }
             } else {
                 // Search by title
+                const limit = 10;
                 const movies = await searchMovies(text);
                 if (!movies || movies.length === 0) {
                     return ctx.reply(ctx.t('not_found'), { parse_mode: 'HTML' });
                 }
 
-                let msg = `🔎 <b>"${text}" :</b>\n\n`;
-                movies.slice(0, 10).forEach((m, i) => {
+                let msg = `🔎 <b>"${text}"</b> qidiruv natijalari (Sahifa 1):\n\n`;
+                const pageMovies = movies.slice(0, limit);
+                pageMovies.forEach((m, i) => {
                     msg += `${i + 1}. 🎬 ${m.title} — <code>${m.code}</code>\n`;
                 });
-                msg += '\n<i>Send code!</i>';
-                msg += '\n<i>Send code!</i>';
+                msg += '\n<i>Kodni yuboring!</i>';
+
+                const totalPages = Math.ceil(movies.length / limit);
+                const buttons = [];
+                if (totalPages > 1) {
+                    buttons.push([
+                        Markup.button.callback('1/' + totalPages, 'noop'),
+                        Markup.button.callback('Keyingi ➡️', `search_2_${text.substring(0, 30)}`)
+                    ]);
+                }
 
                 // Aggressive VIP Promo
                 const dbUser = await getUserByTelegramId(ctx.from.id);
                 const isVip = dbUser && dbUser.vipUntil && new Date(dbUser.vipUntil) > new Date();
-                const buttons = [];
                 if (!isVip) {
                     buttons.push([Markup.button.callback('💎 VIP Olish - Eksklyuziv!', 'vip_info')]);
                 }
@@ -559,6 +584,47 @@ export const setupUserCommands = (bot) => {
         } catch (error) {
             logger.error('Text handler error:', error);
             // Don't crash, just skip
+        }
+    });
+
+    bot.action(/search_(\d+)_(.+)/, async (ctx) => {
+        try {
+            const page = parseInt(ctx.match[1]);
+            const query = ctx.match[2];
+            const limit = 10;
+            const movies = await searchMovies(query);
+            
+            if (!movies || movies.length === 0) return ctx.answerCbQuery('Topilmadi', {show_alert:true});
+            
+            const totalPages = Math.ceil(movies.length / limit);
+            if (page > totalPages || page < 1) return ctx.answerCbQuery('Xato sahifa', {show_alert:true});
+
+            const skip = (page - 1) * limit;
+            const pageMovies = movies.slice(skip, skip + limit);
+
+            let msg = `🔎 <b>"${query}"</b> qidiruv natijalari ${ctx.t('page_info', {page})}:\n\n`;
+            pageMovies.forEach((m, i) => {
+                msg += `${skip + i + 1}. 🎬 ${m.title} — <code>${m.code}</code>\n`;
+            });
+            msg += '\n<i>Kodni yuboring!</i>';
+
+            const buttons = [];
+            const nav = [];
+            if (page > 1) nav.push(Markup.button.callback(ctx.t('page_prev'), `search_${page - 1}_${query.substring(0, 30)}`));
+            nav.push(Markup.button.callback(`${page}/${totalPages}`, 'noop'));
+            if (page < totalPages) nav.push(Markup.button.callback(ctx.t('page_next'), `search_${page + 1}_${query.substring(0, 30)}`));
+            buttons.push(nav);
+
+            const dbUser = await getUserByTelegramId(ctx.from.id);
+            const isVip = dbUser && dbUser.vipUntil && new Date(dbUser.vipUntil) > new Date();
+            if (!isVip) {
+                buttons.push([Markup.button.callback('💎 VIP Olish - Eksklyuziv!', 'vip_info')]);
+            }
+
+            await ctx.editMessageText(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
+            ctx.answerCbQuery().catch(()=>{});
+        } catch(e) {
+            ctx.answerCbQuery('Xatolik').catch(()=>{});
         }
     });
 

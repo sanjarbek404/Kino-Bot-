@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './src/config/db.js';
 import bot from './src/bot/bot.js';
+import { getTopMovies } from './src/services/movieService.js';
 
 dotenv.config();
 
@@ -33,6 +34,18 @@ const startBot = async () => {
 
         app.get('/health', (req, res) => {
             res.json({ status: 'ok', timestamp: new Date() });
+        });
+
+        // Setup WebApp Static Files & REST API
+        app.use('/webapp', express.static('public'));
+        app.get('/api/movies', async (req, res) => {
+            try {
+                // Fetch top 100 movies for the Web App catalog
+                const movies = await getTopMovies(100);
+                res.json(movies);
+            } catch (e) {
+                res.status(500).json({ error: 'Server error' });
+            }
         });
 
         // Setup Webhook or Long Polling based on Environment

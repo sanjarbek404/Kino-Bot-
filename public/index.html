@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FilmXBot Katalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tgBase: 'var(--tg-theme-bg-color)',
+                        tgText: 'var(--tg-theme-text-color)',
+                        tgHint: 'var(--tg-theme-hint-color)',
+                        tgLink: 'var(--tg-theme-link-color)',
+                        tgButton: 'var(--tg-theme-button-color)',
+                        tgButtonText: 'var(--tg-theme-button-text-color)',
+                        tgSecondaryBg: 'var(--tg-theme-secondary-bg-color)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white font-['Inter'] antialiased p-4 pb-20">
+    
+    <header class="mb-6 sticky top-0 bg-gray-900/90 backdrop-blur-md z-10 py-3 -mx-4 px-4 border-b border-gray-800">
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">FilmX Katalog</h1>
+        <p class="text-sm text-gray-400 mt-1" id="subtitle">Eng zo'r kinolar bitta joyda</p>
+        
+        <div class="mt-4 relative">
+            <input type="text" id="searchInput" placeholder="Kino qidirish..." 
+                class="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all placeholder-gray-500 shadow-inner">
+            <svg class="w-5 h-5 text-gray-500 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+    </header>
+
+    <main id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <!-- Skeleton Loaders -->
+        <div class="animate-pulse flex flex-col items-center justify-center">
+            <div class="w-full h-48 bg-gray-800 rounded-2xl mb-2"></div>
+            <div class="w-3/4 h-4 bg-gray-800 rounded mb-1"></div>
+            <div class="w-1/2 h-3 bg-gray-800 rounded"></div>
+        </div>
+        <div class="animate-pulse flex flex-col items-center justify-center">
+            <div class="w-full h-48 bg-gray-800 rounded-2xl mb-2"></div>
+            <div class="w-3/4 h-4 bg-gray-800 rounded mb-1"></div>
+            <div class="w-1/2 h-3 bg-gray-800 rounded"></div>
+        </div>
+    </main>
+
+    <!-- Bottom Notification -->
+    <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+        Kino tanlandi!
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

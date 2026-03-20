@@ -1,0 +1,48 @@
+/* Base resets and smooth scrolling */
+html, body {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--tg-theme-bg-color, #111827);
+    color: var(--tg-theme-text-color, #ffffff);
+}
+
+/* Telegram native feel variables mapping */
+.bg-tg-base { background-color: var(--tg-theme-bg-color, #111827); }
+.text-tg-text { color: var(--tg-theme-text-color, #ffffff); }
+.bg-tg-button { background-color: var(--tg-theme-button-color, #3b82f6); }
+.text-tg-button-text { color: var(--tg-theme-button-text-color, #ffffff); }
+
+/* Custom Scrollbar for hidden but functional scroll */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+/* Movie Card Hover Animations */
+.movie-card {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.movie-card:active {
+    transform: scale(0.96);
+}
+
+/* Image styling */
+.movie-poster {
+    object-fit: cover;
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 0.75rem;
+    background-color: #1f2937;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.toast-visible {
+    opacity: 1 !important;
+    transform: translate(-50%, -10px) !important;
+}

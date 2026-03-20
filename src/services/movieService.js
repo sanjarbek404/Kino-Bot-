@@ -1,5 +1,6 @@
 import Movie from '../models/Movie.js';
 import logger from '../utils/logger.js';
+import myCache from '../utils/cache.js';
 
 export const createMovie = async (movieData) => {
     try {
@@ -12,7 +13,13 @@ export const createMovie = async (movieData) => {
 
 export const getMovieByCode = async (code) => {
     try {
-        return await Movie.findOne({ code });
+        const cacheKey = `movie_${code}`;
+        let cached = myCache.get(cacheKey);
+        if (cached) return cached;
+
+        const movie = await Movie.findOne({ code });
+        if (movie) myCache.set(cacheKey, movie, 180); // cache 3 mins
+        return movie;
     } catch (error) {
         logger.error('Get movie by code error:', error);
         return null;
@@ -21,13 +28,26 @@ export const getMovieByCode = async (code) => {
 
 export const searchMovies = async (query) => {
     try {
-        return await Movie.find(
+        // 1. Dastlab Text Search (Typos and Stems)
+        let movies = await Movie.find(
             { $text: { $search: query } },
             { score: { $meta: "textScore" } }
-        ).sort({ score: { $meta: "textScore" } }).limit(20);
+        ).sort({ score: { $meta: "textScore" } }).limit(50);
+
+        // 2. Agar topilmasa Regex (Qisman mos kelish) bilan izlaymiz (Fallback)
+        if (!movies || movies.length === 0) {
+            movies = await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50);
+        }
+
+        return movies;
     } catch (error) {
-        logger.error('Search movies error:', error);
-        return [];
+        // Fallback for errors in text index
+        try {
+            return await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50);
+        } catch (e) {
+            logger.error('Search movies fallback error:', e);
+            return [];
+        }
     }
 };
 
@@ -60,7 +80,13 @@ export const countMovies = async () => {
 
 export const getTopMovies = async (limit = 10) => {
     try {
-        return await Movie.find().sort({ views: -1 }).limit(limit);
+        const cacheKey = `top_movies_${limit}`;
+        let cached = myCache.get(cacheKey);
+        if (cached) return cached;
+
+        const movies = await Movie.find().sort({ views: -1 }).limit(limit);
+        if (movies) myCache.set(cacheKey, movies, 300); // cache top movies for 5 mins
+        return movies;
     } catch (error) {
         logger.error('Get top movies error:', error);
         return [];

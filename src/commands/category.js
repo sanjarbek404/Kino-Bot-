@@ -28,29 +28,61 @@ export const setupCategoryCommands = (bot) => {
         }
     });
 
-    // Handle genre selection
+    // Handle genre selection and pagination
     bot.action(/genre_(.+)/, async (ctx) => {
         try {
-            const genre = ctx.match[1];
-            const movies = await Movie.find({ genre: { $regex: genre, $options: 'i' } });
+            const matchData = ctx.match[1];
+            // Format can be: "page_2_Jangari" or "Jangari"
+            const pageMatch = matchData.match(/^page_(\d+)_(.+)$/);
+            let page = 1;
+            let genre = matchData;
+            
+            if (pageMatch) {
+                page = parseInt(pageMatch[1]);
+                genre = pageMatch[2];
+            }
+
+            const limit = 10;
+            const skip = (page - 1) * limit;
+
+            const movies = await Movie.find({ genre: { $regex: genre, $options: 'i' } }).sort({createdAt: -1}).skip(skip).limit(limit);
+            const total = await Movie.countDocuments({ genre: { $regex: genre, $options: 'i' } });
 
             if (!movies || movies.length === 0) {
                 return ctx.answerCbQuery('📭 Bu janrda kino topilmadi');
             }
 
-            let msg = `🎭 <b>${genre}</b> janridagi kinolar:\n\n`;
-            movies.slice(0, 15).forEach((m, i) => {
-                msg += `${i + 1}. 🎬 ${m.title} — <code>${m.code}</code>\n`;
+            let msg = `🎭 <b>${genre}</b> janridagi kinolar ${ctx.t('page_info', {page})}:\n\n`;
+            movies.forEach((m, i) => {
+                msg += `${skip + i + 1}. 🎬 ${m.title} — <code>${m.code}</code>\n`;
             });
             msg += '\n<i>Kino kodini yuboring va tomosha qiling!</i>';
 
-            await ctx.editMessageText(msg, { parse_mode: 'HTML' });
+            const totalPages = Math.ceil(total / limit);
+            const buttons = [];
+            const navRow = [];
+            if (page > 1) navRow.push(Markup.button.callback(ctx.t('page_prev'), `genre_page_${page - 1}_${genre}`));
+            if (totalPages > 1) navRow.push(Markup.button.callback(`${page}/${totalPages}`, 'noop'));
+            if (page < totalPages) navRow.push(Markup.button.callback(ctx.t('page_next'), `genre_page_${page + 1}_${genre}`));
+            
+            if (navRow.length > 0) buttons.push(navRow);
+            
+            // Edit or Reply depending on whether the query was fired from a previous page
+            try {
+                await ctx.editMessageText(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
+            } catch (editError) {
+                // If message hasn't changed or it's first time
+                await ctx.reply(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
+            }
+            
             ctx.answerCbQuery().catch(() => { });
         } catch (e) {
             logger.error('Genre action error:', e);
             ctx.answerCbQuery('❌ Xatolik').catch(() => { });
         }
     });
+
+    bot.action('noop', (ctx) => ctx.answerCbQuery().catch(()=>{}));
 };
 
 // Inline Search Handler - KINO KODI orqali qidirish
