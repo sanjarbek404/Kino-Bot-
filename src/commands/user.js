@@ -219,15 +219,12 @@ export const setupUserCommands = (bot) => {
             } else {
                 msg += `💎 <b>Status:</b> Oddiy (VIP emassiz)\n`;
             }
-            msg += `💰 <b>Ballar:</b> ${dbUser.points || 0}\n`;
-
             const buttons = [
                 [Markup.button.callback('💡 AI Tavsiyalar', 'cb_ai_rec'), Markup.button.callback('🎰 Omadni sinash', 'cb_random')],
                 [Markup.button.callback('❤️ Sevimlilar', 'cb_fav'), Markup.button.callback('📜 Tarixim', 'cb_history')],
-                [Markup.button.callback('🛍 Do\'kon', 'cb_shop'), Markup.button.callback('🎁 Bonus', 'cb_bonus')],
-                [Markup.button.callback('📊 Statistika', 'cb_stats'), Markup.button.callback('🗣 Taklif', 'cb_invite')],
-                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish (Chegirma)', isVip ? 'cb_vip' : 'vip_info')],
-                [Markup.button.callback('🏆 Oylik Reyting - Top 10', 'cb_leaderboard')]
+                [Markup.button.callback('💎 VIP Do\'kon', 'cb_shop'), Markup.button.callback('📊 Statistika', 'cb_stats')],
+                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish', isVip ? 'cb_vip' : 'cb_shop')],
+                [Markup.button.callback('🏆 Reyting - Top 10', 'cb_leaderboard')]
             ];
 
             await ctx.reply(msg, {
@@ -300,58 +297,84 @@ export const setupUserCommands = (bot) => {
         try {
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return;
-            let msg = `🛍 <b>FilmXBot VIP Do'koniga Xush Kelibsiz!</b>\n\n💰 Balansingiz: <b>${user.points || 0} ball</b>\n\n🛒 <i>Ballarni qanday ishlatsangiz bo'ladi?</i>\n`;
-            msg += `▫️ <b>VIP Status (1 kunlik)</b> — 1000 ball\n`;
-            msg += `▫️ <b>VIP Status (1 haftalik)</b> — 3000 ball\n`;
-            msg += `<i>Ball yig'ish uchun har kuni '🎁 Bonus' oling yoki do'stlarni taklif qiling.</i>\n\nQuyidan VIP turlarini xarid qiling:`;
+            let msg = `🛍 <b>FilmXBot VIP Do'koniga Xush Kelibsiz!</b>\n\n🛒 <i>Quyidan o'zingizga qulay muddatdagi VIP statusni Telegram Yulduzlari orqali xarid qiling. Bu juda xavfsiz va to'lov bevosita Telegram orgali amalga oshadi:</i>\n`;
             
             const buttons = [
-                [Markup.button.callback('💎 1 kunlik VIP (1000 ball)', 'buy_vip_1')],
-                [Markup.button.callback('💎 7 kunlik VIP (3000 ball)', 'buy_vip_7')],
-                [Markup.button.callback('🎫 Promokod ishlatish', 'cb_promo')]
+                [Markup.button.callback('⭐️ 7 kun VIP (7 ⭐️)', 'stars_buy_7'), Markup.button.callback('⭐️ 10 kun VIP (10 ⭐️)', 'stars_buy_10')],
+                [Markup.button.callback('⭐️ 1 oy VIP (30 ⭐️)', 'stars_buy_30'), Markup.button.callback('⭐️ 1 yil VIP (365 ⭐️)', 'stars_buy_365')]
             ];
             await ctx.reply(msg, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
             await ctx.answerCbQuery().catch(() => {});
         } catch (e) {}
     });
 
-    bot.action(/buy_vip_(\d+)/, async (ctx) => {
+    // Telegram Stars Payment logic
+    bot.action(/stars_buy_(\d+)/, async (ctx) => {
         try {
             const days = parseInt(ctx.match[1]);
-            const price = days === 1 ? 1000 : 3000;
-            const user = await User.findOne({ telegramId: ctx.from.id });
-            if (!user) return;
+            const priceXtr = days; // EXACT MATCH 7 days = 7 stars!
+            
+            await ctx.answerCbQuery('Invois qog\'ozi yaratilmoqda...').catch(()=>{});
+            
+            await ctx.replyWithInvoice({
+                title: `VIP Obuna (${days} kunlik)`,
+                description: `FilmXBot da eng zo'r qulayliklarga ega bo'ling va cheklovsiz ishlating! \n\n🔒 To'lovlar 100% xavfsiz va bevosita Telegram jamoasi orqali amalga oshiriladi.`,
+                payload: `vip_stars_${days}_${ctx.from.id}`,
+                provider_token: '', // Must be empty for Telegram Stars
+                currency: 'XTR',
+                prices: [{ label: `${days} Kunlik VIP status`, amount: priceXtr }]
+            });
+        } catch (e) {
+            logger.error('stars_buy err:', e);
+        }
+    });
 
-            if ((user.points || 0) < price) {
-                return ctx.answerCbQuery(`❌ Mablag' yetarli emas! Sizga yana ${price - (user.points || 0)} ball kerak.`, { show_alert: true });
+    bot.on('pre_checkout_query', async (ctx) => {
+        try {
+            await ctx.answerPreCheckoutQuery(true).catch(()=>{});
+        } catch(e) {}
+    });
+
+    bot.on('successful_payment', async (ctx) => {
+        try {
+            const payload = ctx.message.successful_payment.invoice_payload;
+            if (payload && payload.startsWith('vip_stars_')) {
+                const parts = payload.split('_');
+                const days = parseInt(parts[2]);
+                const targetId = parseInt(parts[3]);
+                
+                if (ctx.from.id === targetId) {
+                    const user = await User.findOne({ telegramId: targetId });
+                    if (user) {
+                        const currentVip = user.vipUntil && new Date(user.vipUntil) > new Date() ? new Date(user.vipUntil) : new Date();
+                        currentVip.setDate(currentVip.getDate() + days);
+                        user.vipUntil = currentVip;
+                        await user.save();
+                        
+                        await ctx.reply(`🎉 <b>Tabriklaymiz! To'lov Muvaffaqiyatli!</b>\n\nSiz <b>${ctx.message.successful_payment.total_amount} ⭐️ Telegram Yulduzi</b> evaziga botimizdan ${days} kunlik VIP ni xarid qildingiz!\n💎 VIP ${currentVip.toISOString().split('T')[0]} sanasiga qadar amal qiladi. Siz bilan ishlashdan xursandmiz!`, { parse_mode: 'HTML' });
+                    }
+                }
             }
-
-            user.points -= price;
-            const currentVip = user.vipUntil && new Date(user.vipUntil) > new Date() ? new Date(user.vipUntil) : new Date();
-            currentVip.setDate(currentVip.getDate() + days);
-            user.vipUntil = currentVip;
-            await user.save();
-
-            await ctx.answerCbQuery(`✅ Muvaffaqiyatli! Sizga ${days} kunlik VIP berildi.`, { show_alert: true });
-            await ctx.editMessageText(`✅ <b>Tabriklaymiz!</b>\n\nSiz <b>${price} ball</b> evaziga <b>${days} kunlik VIP</b> sotib oldingiz!\n💎 VIP ${currentVip.toISOString().split('T')[0]} sanasiga qadar amal qiladi.`, { parse_mode: 'HTML' });
-        } catch (e) {}
+        } catch (e) {
+            logger.error('successful_payment err:', e);
+        }
     });
 
     bot.action('cb_leaderboard', async (ctx) => {
         try {
             await ctx.answerCbQuery('Reyting hisoblanmoqda...').catch(()=>{});
-            const topUsers = await User.find({ isBanned: false }).sort({ points: -1, moviesWatched: -1 }).limit(10);
+            const topUsers = await User.find({ isBanned: false }).sort({ moviesWatched: -1 }).limit(10);
             
             let msg = `🏆 <b>FilmXBot Liderlar Taxtasi (Top 10)</b>\n\n`;
-            msg += `<i>Kinomanda baland ball ishlagan eng faol Top 10 foydalanuvchi:</i>\n\n`;
+            msg += `<i>Eng ko'p va faol kino ko'rib kelayotgan foydalanuvchilar:</i>\n\n`;
             
             topUsers.forEach((u, i) => {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎗';
                 const name = (u.firstName || 'Foydalanuvchi').replace(/</g, '').replace(/>/g, ''); // html himoya
-                msg += `${medal} <b>${name}</b> — 💰 ${u.points || 0} ball | 🎬 ${u.moviesWatched || 0} ta kino\n`;
+                msg += `${medal} <b>${name}</b> — 🎬 ${u.moviesWatched || 0} ta kino\n`;
             });
             
-            msg += `\n🛒 <i>Orqada qolib ketmang! Har kuni <b>"🎁 Kunlik Bonus"</b> yig'ib reytingda 1-o'ringa chiqing!</i>`;
+            msg += `\n🛒 <i>Boshqalardan orqada qolmang va eng ko'p kinolarni tomosha qilib reyting cho'qqisiga chiqing!</i>`;
             
             await ctx.reply(msg, {
                 parse_mode: 'HTML',
@@ -688,13 +711,7 @@ export const setupUserCommands = (bot) => {
             }
         } catch (e) { }
     });
-
-    bot.action('cb_promo', async (ctx) => {
-        try {
-            await ctx.answerCbQuery('🎫 Promokod kiriting...');
-            await ctx.scene.enter('REDEEM_PROMO_SCENE');
-        } catch (e) { }
-    });
+    // (Promokod va Eski xaridlar uchirildi)
 
     // ⚠️ Report Action
     bot.action(/report_(\d+)/, async (ctx) => {
