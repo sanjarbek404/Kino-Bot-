@@ -91,22 +91,31 @@ function App() {
             {filteredMovies.map((movie) => {
               const imgUrl = movie.poster && movie.poster.startsWith('http') 
                 ? movie.poster 
-                : 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=300&h=450';
+                : `/api/image/${movie.poster}`;
               
               return (
                 <motion.div 
                   layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  whileHover={{ y: -5, scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
                   key={movie._id || movie.code} 
                   className="flex flex-col relative group cursor-pointer"
                   onClick={() => handleSelect(movie)}
                 >
-                  <div className="relative overflow-hidden rounded-xl bg-gray-800 shadow-lg border border-gray-700/30">
+                  <div className="relative overflow-hidden rounded-2xl bg-gray-900 shadow-xl border border-white/5 group-hover:border-blue-500/30 transition-all duration-300">
                     <img src={imgUrl} alt={movie.title} className="w-full aspect-[2/3] object-cover" loading="lazy" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent opacity-90"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent opacity-60"></div>
+                    
+                    {/* Always visible Play Button like a video thumbnail */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/40 backdrop-blur-md p-3.5 rounded-full text-white/90 shadow-2xl border border-white/20 transform transition-transform group-hover:scale-110">
+                            <svg className="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"/></svg>
+                        </div>
+                    </div>
+
                     <div className="absolute top-2 right-2">
                         <span className="bg-black/50 backdrop-blur-md text-white/90 text-[10px] px-1.5 py-0.5 rounded shadow-sm border border-white/10">#{movie.code}</span>
                     </div>
@@ -114,8 +123,8 @@ function App() {
                       <span className="bg-blue-600/90 border border-blue-500/50 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-sm">👁 {movie.views || 0}</span>
                     </div>
                   </div>
-                  <div className="mt-2 px-1">
-                    <h3 className="text-sm font-semibold truncate leading-tight text-white/95">{movie.title}</h3>
+                  <div className="mt-2.5 px-1.5">
+                    <h3 className="text-[13px] font-bold truncate leading-tight text-white">{movie.title}</h3>
                     <p className="text-[11px] text-gray-400 truncate mt-0.5">{movie.genre || 'Kino'}</p>
                   </div>
                 </motion.div>

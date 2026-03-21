@@ -38,6 +38,16 @@ const startBot = async () => {
 
         // Setup WebApp Static Files & REST API
         app.use('/webapp', express.static('public'));
+        
+        app.get('/api/image/:fileId', async (req, res) => {
+            try {
+                const link = await bot.telegram.getFileLink(req.params.fileId);
+                res.redirect(link.href);
+            } catch (e) {
+                res.status(404).send('Image not found');
+            }
+        });
+
         app.get('/api/movies', async (req, res) => {
             try {
                 // Fetch top 100 movies for the Web App catalog

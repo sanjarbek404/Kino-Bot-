@@ -100,7 +100,6 @@ Ushbu kino maxsus himoya ostida joylangan. Yuklab olish va boshqalarga yuborish 
                     caption,
                     parse_mode: 'HTML',
                     protect_content: movie.isRestricted ? true : !isVip,
-                    thumb: movie.poster || undefined,
                     ...Markup.inlineKeyboard(buttons)
                 });
 
