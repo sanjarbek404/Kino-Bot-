@@ -144,7 +144,7 @@ Ushbu kino maxsus himoya ostida joylangan. Yuklab olish va boshqalarga yuborish 
         return true;
     } catch (error) {
         logger.error('sendMovie error:', error);
-        await ctx.reply(ctx.t('error_general')).catch(() => { });
+        await ctx.reply(`🔧 Xatolik yuz berdi: <b>${error.message || 'Nomaʼlum'}</b>`, { parse_mode: 'HTML' }).catch(() => { });
         return false;
     }
 };
