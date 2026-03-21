@@ -17,6 +17,7 @@ import userProfileScene from '../scenes/userProfileScene.js';
 import globalVipScene from '../scenes/globalVipScene.js';
 import directMessageScene from '../scenes/directMessageScene.js';
 import startGifScene from '../scenes/startGifScene.js';
+import addFavCodeScene from '../scenes/addFavCodeScene.js';
 import { setupAdminCommands } from '../commands/admin.js';
 import { setupStartCommand } from '../commands/start.js';
 import { setupUserCommands } from '../commands/user.js';
@@ -40,7 +41,8 @@ const stage = new Scenes.Stage([
     userProfileScene,
     globalVipScene,
     directMessageScene,
-    startGifScene
+    startGifScene,
+    addFavCodeScene
 ]);
 
 const bot = new Telegraf(process.env.BOT_TOKEN);

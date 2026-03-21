@@ -24,72 +24,28 @@ export const sendMovie = async (ctx, movie, dbUser) => {
         // Watermark for caption
         const userWatermark = ctx.from.username ? `@${ctx.from.username}` : `ID: ${ctx.from.id}`;
 
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        };
+
         let caption = ctx.t('movie_found', {
-            title: movie.title,
+            title: escapeHTML(movie.title),
             year: (movie.year || (movie.released ? new Date(movie.released).getFullYear() : 'N/A')),
-            genre: (Array.isArray(movie.genres) ? movie.genres.join(', ') : (movie.genre || 'N/A')),
+            genre: escapeHTML(Array.isArray(movie.genres) ? movie.genres.join(', ') : (movie.genre || 'N/A')),
             rating: movie.averageRating || '0.0',
             views: views
         });
 
         if (movie.description) {
-            caption += `\n📝 ${movie.description}\n`;
-        }
-        caption += `\n👤 User: ${userWatermark}`;
-
-        // Add Restricted Warning
-        if (movie.isRestricted) {
-            caption += `\n\n⚠️ <i>Ushbu kino admin tomonidan qat'iy himoyalangan. Uni aslo yuklab, yoxud uzatib bo'lmaydi.</i>`;
-        } else if (!isVip) {
-            caption += `\n\n🔒 <i>🔐 Hurmatli foydalanuvchi!
-Ushbu kino maxsus himoya ostida joylangan. Yuklab olish va boshqalarga yuborish (forward) funksiyasi cheklangan.
-
-✨ Ushbu imkoniyatlar faqat VIP foydalanuvchilar uchun ochiq:
-• 📥 Yuklab olish
-• 🔄 Forward (ulashish)
-• 🚀 Cheklovlarsiz foydalanish
-
-💎 VIP obuna orqali barcha premium funksiyalarni faollashtiring!</i>`;
+            let desc = movie.description.length > 350 ? movie.description.substring(0, 350) + '...' : movie.description;
+            caption += `\n📝 ${escapeHTML(desc)}\n`;
         }
 
-        // Increment User Watched Count (if DBUser exists)
-        if (dbUser) {
-            await User.findByIdAndUpdate(dbUser._id, {
-                $inc: { moviesWatched: 1 },
-                $push: {
-                    watchHistory: {
-                        $each: [{ movie: movie._id }],
-                        $slice: -20 // Keep only last 20
-                    }
-                }
-            });
-        }
-
-        // Check if already favorite
-        let isFav = false;
-        if (dbUser && dbUser._id) {
-            try {
-                isFav = await Favorite.findOne({ user: dbUser._id, movie: movie._id });
-            } catch (e) { }
-        }
-
-        const buttons = [
-            [Markup.button.callback(isFav ? '💔' : '❤️', `fav_${movie._id}`)],
-            [Markup.button.callback(ctx.t('menu_vip'), `review_${movie.code}`), Markup.button.callback('💬', `read_reviews_${movie.code}`)]
-        ];
-
-        // 📤 Do'stlarga yuborish (Referall Marketing)
-        if (!movie.isRestricted) {
-            const shareUrl = `https://t.me/share/url?url=https://t.me/${ctx.botInfo.username}?start=${movie.code}&text=🎬 Men ushbu zo'r kinoni topdim, ko'rishni tavsiya qilaman!`;
-            buttons.push([Markup.button.url('↗️ Do\'stlarga yuborish', shareUrl)]);
-        }
-
-        // 💎 VIP Promo Button for non-VIP users
+        let buttons = [];
         if (!isVip) {
-            buttons.push([Markup.button.callback('💎 VIP Olish - Eksklyuziv!', 'vip_info')]);
-        } else {
-            // VIP Report Button
-            buttons.push([Markup.button.callback('⚠️ Shikoyat', `report_${movie.code}`)]);
+            caption += `\n\n🔒 <i>Faqatgina VIP obunachilargina ushbu kinoni yuklab olib boshqalarga uzata (forward) oladi.</i>`;
+            buttons.push([Markup.button.callback('💎 VIP Olish', 'vip_info')]);
         }
 
         // Send video for all users, but lock forwarding/saving if restricted or non-VIP
@@ -245,10 +201,10 @@ export const setupUserCommands = (bot) => {
                 msg += `💎 <b>Status:</b> Oddiy (VIP emassiz)\n`;
             }
             const buttons = [
+                [Markup.button.callback('❤️ Sevimlilar', 'cb_fav'), Markup.button.callback('➕ Saqlash (Kod)', 'cb_add_fav_code')],
                 [Markup.button.callback('💡 AI Tavsiyalar', 'cb_ai_rec'), Markup.button.callback('🎰 Omadni sinash', 'cb_random')],
-                [Markup.button.callback('❤️ Sevimlilar', 'cb_fav'), Markup.button.callback('📜 Tarixim', 'cb_history')],
-                [Markup.button.callback('💎 VIP Do\'kon', 'cb_shop'), Markup.button.callback('📊 Statistika', 'cb_stats')],
-                [Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish', isVip ? 'cb_vip' : 'cb_shop')],
+                [Markup.button.callback('📜 Tarixim', 'cb_history'), Markup.button.callback('📊 Statistika', 'cb_stats')],
+                [Markup.button.callback('💎 VIP Do\'kon', 'cb_shop'), Markup.button.callback(isVip ? '👑 VIP Aktiv' : '💎 VIP Olish', isVip ? 'cb_vip' : 'cb_shop')],
                 [Markup.button.callback('🏆 Reyting - Top 10', 'cb_leaderboard')]
             ];
 
@@ -263,6 +219,11 @@ export const setupUserCommands = (bot) => {
     });
 
     // --- CABINET INLINE ACTIONS ---
+    bot.action('cb_add_fav_code', async (ctx) => {
+        await ctx.answerCbQuery().catch(()=>{});
+        ctx.scene.enter('ADD_FAV_CODE_SCENE');
+    });
+
     bot.action('cb_ai_rec', async (ctx) => {
         try {
             await ctx.answerCbQuery('💡 AI tahlil qilmoqda...').catch(() => {});
